@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Testing
+.pytest_cache/
+
+# Agent / IDE local artifacts
+.codeatlas/
+
+# MLflow model artifacts directory (mlflow.db is committed as required)
+mlruns/
+mlartifacts/
+**/mlruns/
+**/mlartifacts/

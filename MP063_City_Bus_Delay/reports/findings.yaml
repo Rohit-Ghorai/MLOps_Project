@@ -1,62 +1,53 @@
-# MP063 findings --- fill in every value, keep every key.
-# The marking tool reads this file. Write null only where the comment says so.
-# Use the exact column names and group values from your data files.
-
-group_id: "G192"          # your group id, e.g. "G042"
-problem_id: "MP063"
-
+group_id: G192
+problem_id: MP063
 data_issues:
-  # For each of the 7 kinds: present: true or false.
-  # If present is false, leave the other values as null.
   leaking_column:
     present: true
-    column: delay_logged_by_conductor           # the column that must not be used as a feature
+    column: delay_logged_by_conductor
   unit_mixup:
     present: false
-    column: null           # the column recorded in a different unit
-    group_value: null      # the value of depot_zone whose rows are affected
-    factor: null           # wrong value = right value x factor
+    column: null
+    group_value: null
+    factor: null
   sentinel_value:
     present: false
     column: null
-    value: null            # the special number typed instead of a blank
-    count: null            # how many rows have it
+    value: null
+    count: null
   duplicate_rows:
     present: true
-    count: 46            # number of EXTRA copies (rows you would delete)
+    count: 46
   stuck_sensor:
     present: false
     column: null
-    start_date: null       # first date with the stuck value, YYYY-MM-DD
-    end_date: null         # last date with the stuck value, YYYY-MM-DD
+    start_date: null
+    end_date: null
   target_typos:
     present: true
-    count: 15            # rows whose target was typed 10 times too big
+    count: 15
   spelling_variants:
     present: false
     column: null
-    true_levels: null      # how many real categories there are after cleaning
-
+    true_levels: null
 tracking:
-  experiment_name: null
-  best_run_id: null        # the MLflow run id of your v1 model
-  registered_model_name: null
-  champion_version: null
-
+  experiment_name: G192_MP063_City_Bus_Delay
+  best_run_id: 43b53a1d91994eb3a85355f0a3cb57f7
+  registered_model_name: G192_MP063_BusDelay
+  champion_version: 2
 monitoring:
-  psi:                     # cleaned train.csv vs later.csv, 10 bins
-    route_km: null
-    stops: null
-    passengers: null
-    hour: null
-    temp_c: null
-    driver_exp_yr: null
-  most_drifted_feature: null
-  mae_by_group:            # v1 on later.csv, per value of depot_zone
-    'North': null
-    'South': null
-    'East': null
-  worst_served_group: null
-  mae_v1_on_check: null    # v1 on the last 30% of later.csv (by date)
-  mae_v2_on_check: null    # v2 on the same rows
-  decision: null           # promote or keep
+  psi:
+    route_km: 0.0412
+    stops: 6.9235
+    passengers: 0.0511
+    hour: 0.0193
+    temp_c: 0.0421
+    driver_exp_yr: 0.057
+  most_drifted_feature: stops
+  mae_by_group:
+    North: 11.9857
+    South: 3.784
+    East: 4.1818
+  worst_served_group: North
+  mae_v1_on_check: 9.117
+  mae_v2_on_check: 2.91
+  decision: promote
