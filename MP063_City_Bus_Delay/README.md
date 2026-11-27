@@ -22,11 +22,15 @@ MP063_City_Bus_Delay/
 ├── requirements.txt                       # Pinned production and test dependencies
 ├── params.yaml                            # Centralized project parameters and model configurations
 ├── pytest.ini                             # Pytest testpath and pythonpath configuration
+├── Dockerfile                             # Production API image (mp063-api:1.0)
+├── .dockerignore
+├── .github/workflows/ci.yml               # GitHub Actions test workflow
+├── app/
+│   └── main.py                            # FastAPI API, Pydantic validation and JSON logs
+├── k8s/
+│   ├── deployment.yaml                    # Three-replica API Deployment
+│   └── service.yaml                       # ClusterIP Service
 ├── mlflow.db                              # SQLite MLflow tracking database
-├── Dockerfile                             # Production container configuration
-├── .dockerignore                          # Build ignore rules
-├── app/                                   # FastAPI application (Saujanya)
-│   └── main.py                            # Endpoints: POST /predict, GET /health
 ├── data/
 │   ├── raw/                               # Raw datasets tracked by DVC
 │   │   ├── train.csv                      # Original raw training dataset (SHA-256: ebf413b2...)
@@ -65,7 +69,8 @@ MP063_City_Bus_Delay/
 │       ├── predict.py                     # Batch prediction generator for holdout set
 │       └── monitoring.py                  # PSI drift calculation, v2 retraining & promotion
 └── tests/
-    └── test_model_pipeline.py             # Pytest suite validating end-to-end ML pipeline
+    ├── test_model_pipeline.py             # Pytest suite validating end-to-end ML pipeline
+    └── test_service.py                    # FastAPI endpoint and request validation tests
 ```
 
 ---
@@ -111,4 +116,25 @@ python -m src.model_pipeline.predict
 ### 7. Run Test Suite
 ```bash
 python -m pytest tests/ -v
+```
+
+### 8. Run the Prediction API
+```bash
+uvicorn app.main:app --host 0.0.0.0 --port 8000
+```
+
+The API provides `GET /health` and `POST /predict`. Requests require exactly
+the eight model features; `route_km` must be at least 1.5 and `stops` cannot
+exceed 70. Prediction events are written as JSON lines to stdout.
+
+### 9. Build and deploy
+```bash
+docker build -t mp063-api:1.0 .
+kubectl apply -f k8s/
+```
+
+The monitoring command computes PSI, evaluates group MAE, retrains v2, and
+applies the 10% promotion rule:
+```bash
+python -m src.model_pipeline.monitoring
 ```
