@@ -1,0 +1,12 @@
+.git
+.github
+.pytest_cache
+__pycache__
+*.py[cod]
+tests
+data
+reports
+predictions
+mlflow.db
+models/*
+!models/model.joblib
