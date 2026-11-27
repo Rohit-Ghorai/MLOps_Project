@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nagpur City Bus Delay Predictor | MP063 - Group G192</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @keyframes pulse-slow {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.85; transform: scale(1.02); }
+    }
+    .pulse-badge { animation: pulse-slow 3s infinite ease-in-out; }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col font-sans">
+  <!-- Top Navbar -->
+  <header class="bg-slate-800/80 backdrop-blur border-b border-slate-700/80 sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="bg-amber-500 text-slate-950 p-2.5 rounded-xl shadow-lg shadow-amber-500/20">
+          <i class="fa-solid fa-bus text-xl"></i>
+        </div>
+        <div>
+          <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-2">
+            Nagpur City Bus Service
+            <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">MP063</span>
+          </h1>
+          <p class="text-xs text-slate-400">Intelligent Real-Time Delay Prediction & Dispatch System</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-4">
+        <div id="healthBadge" class="flex items-center space-x-2 px-3 py-1.5 rounded-full bg-slate-950/60 border border-slate-700 text-xs">
+          <span class="relative flex h-2.5 w-2.5">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+          </span>
+          <span class="text-slate-300 font-medium">API: <span id="healthText" class="text-emerald-400">Connecting...</span></span>
+        </div>
+        <a href="/docs" target="_blank" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white transition flex items-center gap-1.5 shadow-sm">
+          <i class="fa-solid fa-book-open"></i> API Docs
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    
+    <!-- Hero / Subheader Banner -->
+    <div class="bg-gradient-to-r from-slate-800 to-indigo-950 border border-slate-700/80 rounded-2xl p-6 shadow-xl relative overflow-hidden">
+      <div class="relative z-10 max-w-3xl">
+        <span class="text-xs font-bold tracking-wider text-amber-400 uppercase">Group G192 | Production MLOps Engine</span>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-white mt-1">Bus Delay Prediction Dashboard</h2>
+        <p class="text-sm text-slate-300 mt-2 leading-relaxed">
+          Powered by Champion Model <span class="text-indigo-400 font-semibold">HistGradientBoosting (v2 Promoted)</span> registered in MLflow.
+          Predicts trip arrival delay in minutes, alerting commuters and enabling proactive depot dispatch management across Nagpur.
+        </p>
+      </div>
+      <div class="absolute -right-12 -bottom-12 opacity-10 text-9xl text-white pointer-events-none">
+        <i class="fa-solid fa-clock"></i>
+      </div>
+    </div>
+
+    <!-- Quick Preset Buttons -->
+    <div class="flex flex-wrap items-center gap-2">
+      <span class="text-xs font-semibold text-slate-400 mr-1"><i class="fa-solid fa-wand-magic-sparkles mr-1"></i> Quick Presets:</span>
+      <button onclick="applyPreset('morning_rush')" class="text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg border border-slate-700 transition">
+        Morning Peak (North, Clear)
+      </button>
+      <button onclick="applyPreset('monsoon_rain')" class="text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg border border-slate-700 transition">
+        Heavy Monsoon (East, Rain)
+      </button>
+      <button onclick="applyPreset('afternoon_offpeak')" class="text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg border border-slate-700 transition">
+        Off-Peak Low Traffic (South, Clear)
+      </button>
+      <button onclick="applyPreset('fog_late')" class="text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg border border-slate-700 transition">
+        Winter Foggy Morning (North)
+      </button>
+    </div>
+
+    <!-- Main Grid: Form + Result Card -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      
+      <!-- Input Parameters Form (7 cols) -->
+      <div class="lg:col-span-7 bg-slate-800/90 border border-slate-700 rounded-2xl p-6 shadow-xl">
+        <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2 border-b border-slate-700 pb-3">
+          <i class="fa-solid fa-sliders text-amber-400"></i> Trip Operational Parameters
+        </h3>
+
+        <form id="predictForm" onsubmit="handlePredict(event)" class="space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <!-- Route KM -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">
+                Route Distance (km) <span class="text-amber-400">* (&ge; 1.5)</span>
+              </label>
+              <div class="relative">
+                <input type="number" step="0.1" min="1.5" id="route_km" value="15.5" required
+                  class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                <span class="absolute right-3 top-2 text-xs text-slate-500">km</span>
+              </div>
+              <p class="text-[11px] text-slate-500 mt-0.5">Client Rule: Min 1.5 km</p>
+            </div>
+
+            <!-- Stops -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">
+                Total Bus Stops <span class="text-amber-400">* (&le; 70)</span>
+              </label>
+              <div class="relative">
+                <input type="number" min="1" max="70" id="stops" value="22" required
+                  class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                <span class="absolute right-3 top-2 text-xs text-slate-500">stops</span>
+              </div>
+              <p class="text-[11px] text-slate-500 mt-0.5">Client Rule: Max 70 stops</p>
+            </div>
+
+            <!-- Passengers -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">
+                Boarding Passengers <span class="text-amber-400">*</span>
+              </label>
+              <div class="relative">
+                <input type="number" min="0" max="150" id="passengers" value="38" required
+                  class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                <span class="absolute right-3 top-2 text-xs text-slate-500"><i class="fa-solid fa-users"></i></span>
+              </div>
+            </div>
+
+            <!-- Departure Hour -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">
+                Departure Hour (24h) <span class="text-amber-400">*</span>
+              </label>
+              <div class="relative">
+                <input type="number" min="0" max="23" id="hour" value="10" required
+                  class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                <span class="absolute right-3 top-2 text-xs text-slate-500">hrs</span>
+              </div>
+            </div>
+
+            <!-- Temperature -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">
+                Temperature (°C) <span class="text-amber-400">*</span>
+              </label>
+              <div class="relative">
+                <input type="number" step="0.5" id="temp_c" value="29.0" required
+                  class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                <span class="absolute right-3 top-2 text-xs text-slate-500">°C</span>
+              </div>
+            </div>
+
+            <!-- Driver Experience -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">
+                Driver Experience (Years) <span class="text-amber-400">*</span>
+              </label>
+              <div class="relative">
+                <input type="number" step="0.5" min="0" max="45" id="driver_exp_yr" value="7.0" required
+                  class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                <span class="absolute right-3 top-2 text-xs text-slate-500">yrs</span>
+              </div>
+            </div>
+
+            <!-- Weather -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">
+                Weather Condition <span class="text-amber-400">*</span>
+              </label>
+              <select id="weather" required
+                class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                <option value="clear" selected>Clear</option>
+                <option value="rain">Rain (Monsoon)</option>
+                <option value="fog">Fog</option>
+              </select>
+            </div>
+
+            <!-- Depot Zone -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">
+                Depot Zone <span class="text-amber-400">*</span>
+              </label>
+              <select id="depot_zone" required
+                class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                <option value="North">North Depot</option>
+                <option value="South" selected>South Depot</option>
+                <option value="East">East Depot</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="pt-3">
+            <button type="submit" id="submitBtn"
+              class="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold py-2.5 px-4 rounded-xl shadow-lg shadow-amber-500/20 transition flex items-center justify-center gap-2">
+              <i class="fa-solid fa-calculator"></i> Predict Bus Delay
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Live Prediction Results Card (5 cols) -->
+      <div class="lg:col-span-5 space-y-6">
+        <div class="bg-slate-800/90 border border-slate-700 rounded-2xl p-6 shadow-xl relative overflow-hidden">
+          <h3 class="text-lg font-bold text-white mb-2 flex items-center justify-between border-b border-slate-700 pb-3">
+            <span class="flex items-center gap-2">
+              <i class="fa-solid fa-gauge-high text-indigo-400"></i> Delay Prediction Result
+            </span>
+            <span id="delayBadge" class="text-xs px-2.5 py-1 rounded-full font-semibold bg-slate-700 text-slate-300">
+              Ready
+            </span>
+          </h3>
+
+          <!-- Big Number Display -->
+          <div class="my-6 text-center">
+            <span class="text-xs font-medium text-slate-400 uppercase tracking-widest block">Estimated Arrival Delay</span>
+            <div class="flex items-baseline justify-center mt-2">
+              <span id="predValue" class="text-6xl font-black tracking-tight text-white">--</span>
+              <span class="text-xl font-bold text-slate-400 ml-2">minutes</span>
+            </div>
+            <p id="predSubtext" class="text-xs text-slate-400 mt-2">Submit trip details to compute delay estimate</p>
+          </div>
+
+          <!-- Dispatch Guidance Banner -->
+          <div id="dispatchCard" class="bg-slate-900/80 rounded-xl p-4 border border-slate-700/60 space-y-2">
+            <div class="flex items-center gap-2 text-xs font-semibold text-slate-300">
+              <i class="fa-solid fa-circle-info text-amber-400"></i> Dispatch Recommendation:
+            </div>
+            <p id="dispatchMsg" class="text-xs text-slate-400 leading-relaxed">
+              Awaiting operational parameters. When delay estimates exceed 25 minutes, dispatch backup buses from depot.
+            </p>
+          </div>
+
+          <!-- Latency & Model Info -->
+          <div class="mt-4 pt-4 border-t border-slate-700/60 flex items-center justify-between text-[11px] text-slate-500">
+            <span>Model: <strong class="text-slate-400">HistGradientBoosting (Champion)</strong></span>
+            <span>Latency: <strong id="latency" class="text-slate-400">-- ms</strong></span>
+          </div>
+        </div>
+
+        <!-- Live JSON Request/Response Inspector -->
+        <div class="bg-slate-800/90 border border-slate-700 rounded-2xl p-5 shadow-xl">
+          <div class="flex items-center justify-between mb-2">
+            <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+              <i class="fa-solid fa-code text-indigo-400"></i> Live API Payload
+            </h4>
+            <span id="httpStatusBadge" class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-900 text-slate-400">
+              POST /predict
+            </span>
+          </div>
+          <pre id="jsonPreview" class="bg-slate-950 p-3 rounded-xl text-[11px] font-mono text-emerald-400 overflow-x-auto max-h-40 border border-slate-800">
+// Waiting for first request...</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- MLOps Audit & Insights Metrics Grid -->
+    <div class="bg-slate-800/90 border border-slate-700 rounded-2xl p-6 shadow-xl space-y-4">
+      <h3 class="text-base font-bold text-white flex items-center gap-2 border-b border-slate-700 pb-3">
+        <i class="fa-solid fa-chart-line text-emerald-400"></i> MLOps Monitoring & Governance Metadata
+      </h3>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div class="bg-slate-900/60 rounded-xl p-3 border border-slate-700/50">
+          <span class="text-[11px] text-slate-400 uppercase font-semibold">Baseline MAE (v1)</span>
+          <p class="text-xl font-bold text-white mt-1">1.22 <span class="text-xs font-normal text-slate-400">min</span></p>
+          <span class="text-[10px] text-emerald-400">Trained on train_clean</span>
+        </div>
+        <div class="bg-slate-900/60 rounded-xl p-3 border border-slate-700/50">
+          <span class="text-[11px] text-slate-400 uppercase font-semibold">v2 Retrain MAE</span>
+          <p class="text-xl font-bold text-indigo-400 mt-1">2.91 <span class="text-xs font-normal text-slate-400">min</span></p>
+          <span class="text-[10px] text-indigo-400">&darr; 68.08% error drop</span>
+        </div>
+        <div class="bg-slate-900/60 rounded-xl p-3 border border-slate-700/50">
+          <span class="text-[11px] text-slate-400 uppercase font-semibold">Highest Drift (PSI)</span>
+          <p class="text-xl font-bold text-amber-400 mt-1">6.92 <span class="text-xs font-normal text-slate-400">(stops)</span></p>
+          <span class="text-[10px] text-amber-400">Network expansion</span>
+        </div>
+        <div class="bg-slate-900/60 rounded-xl p-3 border border-slate-700/50">
+          <span class="text-[11px] text-slate-400 uppercase font-semibold">Worst Served Depot</span>
+          <p class="text-xl font-bold text-rose-400 mt-1">North <span class="text-xs font-normal text-slate-400">(11.98 min)</span></p>
+          <span class="text-[10px] text-slate-400">Subgroup MAE on later.csv</span>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-slate-950 border-t border-slate-800 py-6 text-center text-xs text-slate-500">
+    <p>SCSE3040 MLOps Mini Project &bull; Group G192 &bull; Faculty: Saurabh Shrivastava (Batch 28)</p>
+    <p class="mt-1">Members: Rohit Ghorai (S24CSEU0374), Sagar Goyal (S24CSEU0441), Saujanya Kajal Baniyan (S24CSEU0483)</p>
+  </footer>
+
+  <!-- Frontend Logic -->
+  <script>
+    // Presets database
+    const presets = {
+      morning_rush: { route_km: 18.0, stops: 32, passengers: 65, hour: 8, temp_c: 26.0, driver_exp_yr: 4.5, weather: 'clear', depot_zone: 'North' },
+      monsoon_rain: { route_km: 22.5, stops: 40, passengers: 55, hour: 17, temp_c: 24.5, driver_exp_yr: 8.0, weather: 'rain', depot_zone: 'East' },
+      afternoon_offpeak: { route_km: 12.0, stops: 16, passengers: 20, hour: 14, temp_c: 34.0, driver_exp_yr: 11.0, weather: 'clear', depot_zone: 'South' },
+      fog_late: { route_km: 16.0, stops: 28, passengers: 42, hour: 7, temp_c: 18.0, driver_exp_yr: 6.0, weather: 'fog', depot_zone: 'North' }
+    };
+
+    function applyPreset(name) {
+      const p = presets[name];
+      if (!p) return;
+      document.getElementById('route_km').value = p.route_km;
+      document.getElementById('stops').value = p.stops;
+      document.getElementById('passengers').value = p.passengers;
+      document.getElementById('hour').value = p.hour;
+      document.getElementById('temp_c').value = p.temp_c;
+      document.getElementById('driver_exp_yr').value = p.driver_exp_yr;
+      document.getElementById('weather').value = p.weather;
+      document.getElementById('depot_zone').value = p.depot_zone;
+      handlePredict();
+    }
+
+    async function checkHealth() {
+      const badge = document.getElementById('healthText');
+      try {
+        const res = await fetch('/health');
+        if (res.ok) {
+          const data = await res.json();
+          badge.textContent = 'Operational (' + data.status + ')';
+          badge.className = 'text-emerald-400';
+        } else {
+          badge.textContent = 'Degraded';
+          badge.className = 'text-amber-400';
+        }
+      } catch (err) {
+        badge.textContent = 'Offline';
+        badge.className = 'text-rose-400';
+      }
+    }
+
+    async function handlePredict(e) {
+      if (e) e.preventDefault();
+      
+      const payload = {
+        route_km: parseFloat(document.getElementById('route_km').value),
+        stops: parseInt(document.getElementById('stops').value, 10),
+        passengers: parseInt(document.getElementById('passengers').value, 10),
+        hour: parseInt(document.getElementById('hour').value, 10),
+        temp_c: parseFloat(document.getElementById('temp_c').value),
+        driver_exp_yr: parseFloat(document.getElementById('driver_exp_yr').value),
+        weather: document.getElementById('weather').value,
+        depot_zone: document.getElementById('depot_zone').value
+      };
+
+      const btn = document.getElementById('submitBtn');
+      const predValue = document.getElementById('predValue');
+      const delayBadge = document.getElementById('delayBadge');
+      const predSubtext = document.getElementById('predSubtext');
+      const dispatchMsg = document.getElementById('dispatchMsg');
+      const latencyEl = document.getElementById('latency');
+      const jsonPreview = document.getElementById('jsonPreview');
+      const httpStatusBadge = document.getElementById('httpStatusBadge');
+
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Estimating...';
+
+      const t0 = performance.now();
+      try {
+        const res = await fetch('/predict', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const elapsed = (performance.now() - t0).toFixed(1);
+        latencyEl.textContent = elapsed + ' ms';
+
+        httpStatusBadge.textContent = 'HTTP ' + res.status;
+        if (res.ok) {
+          const data = await res.json();
+          httpStatusBadge.className = 'text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800';
+          jsonPreview.textContent = JSON.stringify({ request: payload, response: data }, null, 2);
+
+          const delay = data.prediction;
+          predValue.textContent = delay.toFixed(1);
+
+          if (delay < 15.0) {
+            delayBadge.className = 'text-xs px-2.5 py-1 rounded-full font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+            delayBadge.textContent = 'On Schedule / Minor Delay';
+            predSubtext.textContent = 'Bus operating within normal transit timetable tolerances.';
+            dispatchMsg.textContent = 'Route is running smoothly. No emergency backup required. Passengers can expect typical boarding wait times.';
+          } else if (delay <= 25.0) {
+            delayBadge.className = 'text-xs px-2.5 py-1 rounded-full font-semibold bg-amber-500/20 text-amber-400 border border-amber-500/30';
+            delayBadge.textContent = 'Moderate Delay';
+            predSubtext.textContent = 'Trip experiencing notable traffic congestion or weather slowdown.';
+            dispatchMsg.textContent = 'Notify digital stop display boards. Prepare standby driver at depot if downstream congestion intensifies.';
+          } else {
+            delayBadge.className = 'text-xs px-2.5 py-1 rounded-full font-semibold bg-rose-500/20 text-rose-400 border border-rose-500/30';
+            delayBadge.textContent = 'Severe Delay Alert';
+            predSubtext.textContent = 'Critical delay: Trip delay exceeds 25 minutes.';
+            dispatchMsg.textContent = 'Dispatch backup vehicle immediately from ' + payload.depot_zone + ' depot to relieve passenger queuing at intermediate stops.';
+          }
+        } else {
+          const errData = await res.json();
+          httpStatusBadge.className = 'text-[10px] font-mono px-2 py-0.5 rounded bg-rose-950 text-rose-400 border border-rose-800';
+          jsonPreview.textContent = JSON.stringify(errData, null, 2);
+          predValue.textContent = 'ERR';
+          delayBadge.className = 'text-xs px-2.5 py-1 rounded-full font-semibold bg-rose-500/20 text-rose-400 border border-rose-500/30';
+          delayBadge.textContent = 'Validation Error (' + res.status + ')';
+          predSubtext.textContent = errData.detail?.[0]?.msg || 'Request rejected by client rules.';
+          dispatchMsg.textContent = 'Check input parameters: Route distance must be &ge; 1.5 km and Stops must be &le; 70.';
+        }
+      } catch (err) {
+        predValue.textContent = 'FAIL';
+        delayBadge.textContent = 'Network Error';
+        jsonPreview.textContent = '// Failed to reach /predict: ' + err.message;
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-calculator"></i> Predict Bus Delay';
+      }
+    }
+
+    // Auto-check health on load and trigger initial prediction
+    checkHealth();
+    setInterval(checkHealth, 10000);
+    window.addEventListener('DOMContentLoaded', () => { handlePredict(); });
+  </script>
+</body>
+</html>

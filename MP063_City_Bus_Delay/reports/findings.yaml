@@ -33,7 +33,7 @@ tracking:
   experiment_name: G192_MP063_City_Bus_Delay
   best_run_id: 43b53a1d91994eb3a85355f0a3cb57f7
   registered_model_name: G192_MP063_BusDelay
-  champion_version: 2
+  champion_version: 3
 monitoring:
   psi:
     route_km: 0.0412

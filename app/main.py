@@ -12,11 +12,13 @@ from typing import Any, Protocol
 import joblib
 import pandas as pd
 from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, ConfigDict, Field
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 MODEL_PATH = Path(os.environ.get("MODEL_PATH", PROJECT_ROOT / "models/model.joblib"))
+FRONTEND_PATH = Path(__file__).resolve().parent / "frontend.html"
 
 
 class PredictionRequest(BaseModel):
@@ -84,6 +86,12 @@ def create_app(
         yield
 
     application = FastAPI(title="MP063 City Bus Delay API", lifespan=lifespan)
+
+    @application.get("/", response_class=HTMLResponse)
+    def home() -> HTMLResponse:
+        if FRONTEND_PATH.is_file():
+            return HTMLResponse(content=FRONTEND_PATH.read_text(encoding="utf-8"))
+        return HTMLResponse(content="<h1>Nagpur City Bus Delay API (MP063)</h1><p>Visit <a href='/docs'>/docs</a></p>")
 
     @application.get("/health")
     def health() -> dict[str, str]:
