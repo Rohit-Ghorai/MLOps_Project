@@ -54,32 +54,3 @@ The exported inference pipeline (`models/model.joblib`) was verified against the
 * Valid 8-field inference: **Passed**
 * Graceful missing-value imputation: **Passed**
 * Robustness to previously unseen categories: **Passed**
-
----
-
-## 5. Drift Monitoring, Retraining (v2), and Champion Promotion
-
-Following two months of production operation, the arrival of `later.csv` (300 trips from July–August 2026) initiated the monitoring pipeline (`src/model_pipeline/monitoring.py`):
-
-1. **Population Stability Index (PSI):**
-   - Evaluated across all 6 numeric features using 10 quantile bins between `train_clean.csv` and `later.csv`.
-   - **Most Drifted Feature:** `stops` ($\text{PSI} = 6.9235$, caused by substantial route network expansion in July/August).
-   - Other features exhibited minimal drift ($\text{PSI} \le 0.057$).
-
-2. **Subgroup Performance Audit (`depot_zone`):**
-   - v1 MAE on `later.csv` by depot zone:
-     - **North:** 11.9857 min (Worst served)
-     - **South:** 3.7840 min
-     - **East:** 4.1818 min
-
-3. **v2 Retraining & Holdout Evaluation:**
-   - Chronological split of `later.csv` sorted by date: first 70% (210 trips) combined with `train_clean.csv` for retraining; last 30% (90 trips) strictly held out for model evaluation.
-   - **v1 MAE on evaluation check split:** 9.1170 min
-   - **v2 MAE on evaluation check split:** 2.9100 min
-   - **Improvement:** **68.08%** reduction in MAE (well exceeding the client's 10% threshold).
-
-4. **Promotion Decision:**
-   - **Decision:** `promote`
-   - Model v2 was registered in MLflow (`runs:/69e4590695174944939ba87c4b80ae99/model`) as **Version 2**.
-   - Alias `@champion` was assigned to **Version 2**.
-   - Production artifact `models/model.joblib` was updated with the promoted Version 2 pipeline.
