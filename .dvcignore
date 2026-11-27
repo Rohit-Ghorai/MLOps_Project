@@ -1,0 +1,5 @@
+# Add patterns of files dvc should ignore
+.git
+.hg
+.pytest_cache
+__pycache__

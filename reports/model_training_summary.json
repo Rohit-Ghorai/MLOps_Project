@@ -1,0 +1,37 @@
+{
+  "data_sha256": "ebf413b22ab52d4580f7d9eb705f903db91e3780809599e85c208d56378750ae",
+  "experiment_name": "G192_MP063_City_Bus_Delay",
+  "registered_model_name": "G192_MP063_BusDelay",
+  "runs": [
+    {
+      "model_name": "RandomForestRegressor",
+      "run_id": "a259f59c92fc41ebbd2c039efaefecb0",
+      "train_mae": 0.6294,
+      "val_mae": 1.4044,
+      "val_rmse": 1.7206,
+      "val_r2": 0.9166
+    },
+    {
+      "model_name": "ExtraTreesRegressor",
+      "run_id": "caf4283128b64dc7a4e14393f9cc5a78",
+      "train_mae": 0.5073,
+      "val_mae": 1.5145,
+      "val_rmse": 1.8303,
+      "val_r2": 0.9056
+    },
+    {
+      "model_name": "HistGradientBoostingRegressor",
+      "run_id": "43b53a1d91994eb3a85355f0a3cb57f7",
+      "train_mae": 0.3735,
+      "val_mae": 1.2229,
+      "val_rmse": 1.5211,
+      "val_r2": 0.9348
+    }
+  ],
+  "best_model_name": "HistGradientBoostingRegressor",
+  "best_run_id": "43b53a1d91994eb3a85355f0a3cb57f7",
+  "best_val_mae": 1.2229,
+  "champion_version": "1",
+  "champion_alias": "champion",
+  "artifact_path": "models\\model.joblib"
+}

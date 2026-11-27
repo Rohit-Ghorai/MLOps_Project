@@ -1,0 +1,53 @@
+group_id: G192
+problem_id: MP063
+data_issues:
+  leaking_column:
+    present: true
+    column: delay_logged_by_conductor
+  unit_mixup:
+    present: false
+    column: null
+    group_value: null
+    factor: null
+  sentinel_value:
+    present: false
+    column: null
+    value: null
+    count: null
+  duplicate_rows:
+    present: true
+    count: 46
+  stuck_sensor:
+    present: false
+    column: null
+    start_date: null
+    end_date: null
+  target_typos:
+    present: true
+    count: 15
+  spelling_variants:
+    present: false
+    column: null
+    true_levels: null
+tracking:
+  experiment_name: G192_MP063_City_Bus_Delay
+  best_run_id: 43b53a1d91994eb3a85355f0a3cb57f7
+  registered_model_name: G192_MP063_BusDelay
+  champion_version: 2
+monitoring:
+  psi:
+    route_km: 0.0412
+    stops: 6.9235
+    passengers: 0.0511
+    hour: 0.0193
+    temp_c: 0.0421
+    driver_exp_yr: 0.057
+  most_drifted_feature: stops
+  mae_by_group:
+    North: 11.9857
+    South: 3.784
+    East: 4.1818
+  worst_served_group: North
+  mae_v1_on_check: 9.117
+  mae_v2_on_check: 2.91
+  decision: promote

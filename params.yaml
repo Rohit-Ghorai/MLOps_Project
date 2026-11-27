@@ -1,0 +1,62 @@
+paths:
+  raw_train: "data/raw/train.csv"
+  raw_later: "data/raw/later.csv"
+  raw_holdout: "data/raw/holdout_features.csv"
+  processed_train: "data/processed/train_clean.csv"
+  processed_later: "data/processed/later_clean.csv"
+  model_dir: "models"
+  model_artifact: "models/model.joblib"
+  reports_dir: "reports"
+  evaluation_report: "reports/model_evaluation_report.md"
+  predictions_dir: "predictions"
+  holdout_predictions: "predictions/holdout_predictions.csv"
+  findings_file: "reports/findings.yaml"
+
+data:
+  target_col: "delay_min"
+  leakage_col: "delay_logged_by_conductor"
+  id_col: "record_id"
+  date_col: "date"
+  features:
+    numerical:
+      - "route_km"
+      - "stops"
+      - "passengers"
+      - "hour"
+      - "temp_c"
+      - "driver_exp_yr"
+    categorical:
+      - "weather"
+      - "depot_zone"
+
+split:
+  test_size: 0.20
+  random_state: 42
+
+mlflow:
+  tracking_uri: "sqlite:///mlflow.db"
+  experiment_name: "G192_MP063_City_Bus_Delay"
+  registered_model_name: "G192_MP063_BusDelay"
+  alias_name: "champion"
+
+models:
+  random_forest:
+    n_estimators: 100
+    max_depth: 10
+    min_samples_split: 5
+    random_state: 42
+  extra_trees:
+    n_estimators: 100
+    max_depth: 10
+    min_samples_split: 5
+    random_state: 42
+  hist_gradient_boosting:
+    max_iter: 100
+    max_depth: 6
+    min_samples_leaf: 10
+    random_state: 42
+
+monitoring:
+  psi_bins: 10
+  later_train_ratio: 0.70
+  promotion_improvement_threshold: 0.10
