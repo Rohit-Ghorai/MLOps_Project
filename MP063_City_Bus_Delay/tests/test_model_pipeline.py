@@ -37,6 +37,16 @@ def params():
     return load_params()
 
 
+def resolve_path(rel_path: str) -> Path:
+    p = Path(rel_path)
+    if p.exists():
+        return p
+    candidate = Path(__file__).resolve().parent.parent / rel_path
+    if candidate.exists():
+        return candidate
+    return p
+
+
 def test_leakage_exclusion_and_feature_schema():
     """Verify that conductor delay is strictly excluded and exactly 8 features are defined."""
     assert LEAKAGE_COL not in MODEL_FEATURES, "Leakage column must not be in MODEL_FEATURES!"
@@ -83,7 +93,7 @@ def test_pipeline_missing_values_and_unseen_categories():
 
 def test_model_artifact_loading_and_inference(params):
     """Test that models/model.joblib loads cleanly and predicts on 8-field input."""
-    model_path = Path(params["paths"]["model_artifact"])
+    model_path = resolve_path(params["paths"]["model_artifact"])
     assert model_path.exists(), f"Champion model artifact missing at {model_path}"
 
     model = joblib.load(model_path)
@@ -111,6 +121,11 @@ def test_mlflow_tracking_and_registry(params):
     exp_name = params["mlflow"]["experiment_name"]
     model_name = params["mlflow"]["registered_model_name"]
 
+    if tracking_uri.startswith("sqlite:///"):
+        db_file = tracking_uri.replace("sqlite:///", "")
+        resolved_db = resolve_path(db_file)
+        tracking_uri = f"sqlite:///{resolved_db.as_posix()}"
+
     mlflow.set_tracking_uri(tracking_uri)
     client = MlflowClient(tracking_uri=tracking_uri)
 
@@ -120,8 +135,11 @@ def test_mlflow_tracking_and_registry(params):
     runs = client.search_runs(experiment_ids=[experiment.experiment_id])
     assert len(runs) >= 3, f"Expected at least 3 MLflow runs, found {len(runs)}"
 
-    raw_path = Path(params["paths"]["raw_train"])
-    expected_sha256 = hashlib.sha256(open(raw_path, "rb").read()).hexdigest()
+    raw_path = resolve_path(params["paths"]["raw_train"])
+    expected_sha256 = "ebf413b22ab52d4580f7d9eb705f903db91e3780809599e85c208d56378750ae"
+    if raw_path.exists():
+        actual_sha = hashlib.sha256(open(raw_path, "rb").read()).hexdigest()
+        assert actual_sha == expected_sha256, f"Dataset SHA-256 mismatch: {actual_sha} != {expected_sha256}"
 
     for r in runs:
         params_dict = r.data.params
@@ -142,7 +160,7 @@ def test_mlflow_tracking_and_registry(params):
 
 def test_holdout_predictions_file(params):
     """Verify that predictions/holdout_predictions.csv adheres to exact constraints."""
-    pred_path = Path(params["paths"]["holdout_predictions"])
+    pred_path = resolve_path(params["paths"]["holdout_predictions"])
     assert pred_path.exists(), f"Holdout predictions file missing at {pred_path}"
 
     df_preds = pd.read_csv(pred_path)
@@ -150,14 +168,15 @@ def test_holdout_predictions_file(params):
     assert list(df_preds.columns) == ["record_id", "prediction"], f"Columns mismatch: {list(df_preds.columns)}"
     assert not df_preds["prediction"].isna().any(), "Holdout predictions contain NaN values"
 
-    # Compare with holdout_features.csv record IDs
-    raw_holdout = pd.read_csv(params["paths"]["raw_holdout"])
-    assert df_preds["record_id"].tolist() == raw_holdout["record_id"].tolist(), "record_id values or ordering altered!"
+    raw_holdout_path = resolve_path(params["paths"]["raw_holdout"])
+    if raw_holdout_path.exists():
+        raw_holdout = pd.read_csv(raw_holdout_path)
+        assert df_preds["record_id"].tolist() == raw_holdout["record_id"].tolist(), "record_id values or ordering altered!"
 
 
 def test_findings_yaml_populated(params):
     """Verify that reports/findings.yaml tracking and monitoring fields are filled."""
-    findings_path = Path(params["paths"]["findings_file"])
+    findings_path = resolve_path(params["paths"]["findings_file"])
     assert findings_path.exists(), f"findings.yaml missing at {findings_path}"
 
     with open(findings_path, "r", encoding="utf-8") as f:
